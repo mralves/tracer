@@ -20,7 +20,14 @@ const (
 var defaultWriters []Writer
 var lock sync.Locker = &sync.RWMutex{}
 
+func RegisterWriter(writer Writer) {
+	lock.Lock()
+	defer lock.Unlock()
+	defaultWriters = append(defaultWriters, writer)
+}
+
 type Logger interface {
+	RegisterWriter(writer Writer)
 	Debug(message string, args ...interface{})
 	D(message string, args ...interface{})
 	Info(message string, args ...interface{})
@@ -34,6 +41,7 @@ type Logger interface {
 }
 
 type logger struct {
+	sync.Locker
 	writers                    []Writer
 	createImplicitTransactions bool
 	transactionId              string
@@ -42,6 +50,7 @@ type logger struct {
 
 func GetLogger(owner string) Logger {
 	return &logger{
+		Locker: &sync.RWMutex{},
 		writers:                    []Writer{},
 		owner:                      owner,
 		createImplicitTransactions: false,
@@ -114,10 +123,17 @@ func (l *logger) F(message string, args ...interface{}) {
 
 func (l *logger) Trace(transactionId string) Logger {
 	return &logger{
+		Locker: &sync.RWMutex{},
 		writers:                    l.writers,
 		createImplicitTransactions: false,
 		transactionId:              transactionId,
 	}
+}
+
+func (l *logger) RegisterWriter(writer Writer) {
+	l.Lock()
+	defer l.Unlock()
+	l.writers = append(l.writers, writer)
 }
 
 func (l *logger) AutoTrace(on bool) Logger {
@@ -143,6 +159,13 @@ func (l *logger) log(level uint8, message string, args []interface{}) {
 	}
 	var wg sync.WaitGroup
 	for _, writer := range l.writers {
+		wg.Add(1)
+		go func(writer Writer, entry Entry, wg *sync.WaitGroup) {
+			defer wg.Done()
+			writer.Write(entry)
+		}(writer, entry, &wg)
+	}
+	for _, writer := range defaultWriters {
 		wg.Add(1)
 		go func(writer Writer, entry Entry, wg *sync.WaitGroup) {
 			defer wg.Done()
