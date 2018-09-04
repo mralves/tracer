@@ -17,6 +17,9 @@ const (
 	Debug         = uint8(7)
 )
 
+var defaultWriters []Writer
+var lock sync.Locker = &sync.RWMutex{}
+
 type Logger interface {
 	Debug(message string, args ...interface{})
 	D(message string, args ...interface{})
@@ -27,12 +30,22 @@ type Logger interface {
 	Error(message string, args ...interface{})
 	E(message string, args ...interface{})
 	Trace(transactionId string) Logger
+	AutoTrace(on bool) Logger
 }
 
 type logger struct {
 	writers                    []Writer
 	createImplicitTransactions bool
 	transactionId              string
+	owner                      string
+}
+
+func GetLogger(owner string) Logger {
+	return &logger{
+		writers:                    []Writer{},
+		owner:                      owner,
+		createImplicitTransactions: false,
+	}
 }
 
 func (l *logger) Debug(message string, args ...interface{}) {
@@ -107,6 +120,11 @@ func (l *logger) Trace(transactionId string) Logger {
 	}
 }
 
+func (l *logger) AutoTrace(on bool) Logger {
+	l.createImplicitTransactions = on
+	return l
+}
+
 func (l *logger) log(level uint8, message string, args []interface{}) {
 	transactionId := l.transactionId
 	if l.createImplicitTransactions {
@@ -115,6 +133,7 @@ func (l *logger) log(level uint8, message string, args []interface{}) {
 		}
 	}
 	entry := Entry{
+		Owner:         l.owner,
 		Level:         level,
 		Message:       message,
 		Args:          args,

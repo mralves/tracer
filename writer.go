@@ -10,6 +10,7 @@ import (
 )
 
 type Entry struct {
+	Owner         string
 	Level         uint8
 	Message       string
 	Args          []interface{}
