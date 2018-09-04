@@ -58,7 +58,15 @@ func SimpleFormatter(format string) Formatter {
 	}
 	return func(entry Entry) string {
 		var buf bytes.Buffer
-		err := t.Execute(&buf, entry)
+		err := t.Execute(&buf, struct {
+			Entry
+			Time      string
+			LevelName string
+		}{
+			Entry:     entry,
+			Time:      entry.Time.Format(time.RFC3339),
+			LevelName: LevelNames[entry.Level],
+		})
 		if err != nil {
 			return fmt.Sprintf("FAILED TO FORMAT ENTRY BECAUSE: %v\n", err.Error())
 		}

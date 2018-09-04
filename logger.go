@@ -17,6 +17,18 @@ const (
 	Debug         = uint8(7)
 )
 
+var LevelNames = []string{
+	"FATAL",
+	"ALERT",
+	"CRITICAL",
+	"ERROR",
+	"WARNING",
+	"NOTICE",
+	"INFORMATIONAL",
+	"DEBUG",
+}
+
+
 var defaultWriters []Writer
 var lock sync.Locker = &sync.RWMutex{}
 
