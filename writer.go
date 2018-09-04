@@ -1,7 +1,9 @@
 package tracer
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
 	"io"
 	"os"
 	"time"
@@ -22,27 +24,36 @@ type Writer interface {
 
 type Formatter func(entry Entry) string
 
-type fileWriter struct {
+type FileWriter struct {
 	formatter Formatter
 	writer    io.Writer
 }
 
-func (fw *fileWriter) Write(entry Entry) {
-	_, err := io.WriteString(fw.writer, fw.formatter(entry))
+func (fw *FileWriter) Write(entry Entry) {
+	_, err := fw.writer.Write([]byte(fw.formatter(entry)))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "FAIL ON LOGGING ENTRY BECAUSE: %v\n", err.Error())
 	}
 }
 
-func NewFileWriter(file io.Writer, formatter Formatter) Writer {
-	return &fileWriter{
+func NewFileWriter(file io.Writer, formatter Formatter) *FileWriter {
+	return &FileWriter{
 		writer:    file,
 		formatter: formatter,
 	}
 }
 
 func SimpleFormatter(format string) Formatter {
+	t, err := template.New("log").Parse(format)
+	if err != nil {
+		panic(err)
+	}
 	return func(entry Entry) string {
-
+		var buf bytes.Buffer
+		err := t.Execute(&buf, entry)
+		if err != nil {
+			return fmt.Sprintf("FAILED TO FORMAT ENTRY BECAUSE: %v\n", err.Error())
+		}
+		return buf.String()
 	}
 }

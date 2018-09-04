@@ -1,7 +1,9 @@
 package tracer
 
 import (
+	"fmt"
 	"runtime"
+	"strings"
 )
 
 const DefaultDepth = 32
@@ -29,4 +31,12 @@ func GetStackTrace(skip int, maxDepth ...int) StackTrace {
 
 	}
 	return stack
+}
+
+func (st StackTrace) String() string {
+	var formatted strings.Builder
+	for _, caller := range st {
+		fmt.Fprintf(&formatted, "%s:%d\n", caller.File, caller.Line)
+	}
+	return formatted.String()
 }
