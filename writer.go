@@ -6,6 +6,8 @@ import (
 	"html/template"
 	"io"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 )
 
@@ -44,7 +46,12 @@ func NewFileWriter(file io.Writer, formatter Formatter) *FileWriter {
 	}
 }
 
+var pattern = regexp.MustCompile(`@\w+`)
+
 func SimpleFormatter(format string) Formatter {
+	format = pattern.ReplaceAllStringFunc(format, func(match string) string {
+		return fmt.Sprintf("{{.%s}}", strings.Title(match[1:]))
+	})
 	t, err := template.New("log").Parse(format)
 	if err != nil {
 		panic(err)

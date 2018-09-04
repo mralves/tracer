@@ -27,16 +27,24 @@ func RegisterWriter(writer Writer) {
 }
 
 type Logger interface {
-	RegisterWriter(writer Writer)
 	Debug(message string, args ...interface{})
 	D(message string, args ...interface{})
 	Info(message string, args ...interface{})
 	I(message string, args ...interface{})
+	Notice(message string, args ...interface{})
+	N(message string, args ...interface{})
 	Warn(message string, args ...interface{})
 	W(message string, args ...interface{})
 	Error(message string, args ...interface{})
 	E(message string, args ...interface{})
+	Critical(message string, args ...interface{})
+	C(message string, args ...interface{})
+	Alert(message string, args ...interface{})
+	A(message string, args ...interface{})
+	Fatal(message string, args ...interface{})
+	F(message string, args ...interface{})
 	Trace(transactionId string) Logger
+	RegisterWriter(writer Writer)
 	AutoTrace(on bool) Logger
 }
 

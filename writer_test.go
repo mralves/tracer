@@ -25,7 +25,7 @@ func TestSimpleFormatter(t *testing.T) {
 	t.Run("when the entry successfully formatted", func(t *testing.T) {
 		t.Parallel()
 		is := assert.New(t)
-		subject := SimpleFormatter("**{{.Message}}**")
+		subject := SimpleFormatter("**@message**")
 		actual := subject(Entry{
 			Message: "this is a test",
 		})
