@@ -28,16 +28,19 @@ func TestStackTrace_String(t *testing.T) {
 		{
 			Line: 35,
 			File: "one.go",
+			Function: "f1",
 		}, {
 			Line: 10,
 			File: "two.go",
+			Function: "f2",
 		}, {
 			Line: 15,
 			File: "tree.go",
+			Function: "f3",
 		},
 	}
-	expected := "one.go:35\n"
-	expected += "two.go:10\n"
-	expected += "tree.go:15\n"
+	expected := "at f3(tree.go:15)\n"
+	expected += "  at f2(two.go:10)\n"
+	expected += "    at f1(one.go:35)\n"
 	is.Equal(expected, subject.String(), "it should return the expected format")
 }
