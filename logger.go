@@ -28,8 +28,8 @@ var LevelNames = []string{
 	"DEBUG",
 }
 
-
 var defaultWriters []Writer
+var loggers = map[string]Logger{}
 var lock sync.Locker = &sync.RWMutex{}
 
 func RegisterWriter(writer Writer) {
@@ -69,12 +69,17 @@ type logger struct {
 }
 
 func GetLogger(owner string) Logger {
-	return &logger{
-		Locker: &sync.RWMutex{},
-		writers:                    []Writer{},
-		owner:                      owner,
-		createImplicitTransactions: false,
+	lock.Lock()
+	defer lock.Unlock()
+	if _, ok := loggers[owner]; !ok {
+		loggers[owner] = &logger{
+			Locker:                     &sync.RWMutex{},
+			writers:                    []Writer{},
+			owner:                      owner,
+			createImplicitTransactions: false,
+		}
 	}
+	return loggers[owner]
 }
 
 func (l *logger) Debug(message string, args ...interface{}) {
@@ -143,7 +148,7 @@ func (l *logger) F(message string, args ...interface{}) {
 
 func (l *logger) Trace(transactionId string) Logger {
 	return &logger{
-		Locker: &sync.RWMutex{},
+		Locker:                     &sync.RWMutex{},
 		writers:                    l.writers,
 		createImplicitTransactions: false,
 		transactionId:              transactionId,
