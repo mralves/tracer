@@ -16,8 +16,8 @@ type Caller struct {
 }
 
 func (c Caller) String() string {
-	dir, file := path.Split(c.File)
-	return fmt.Sprintf("at %s%s(%s:%d)", dir, c.Function, file, c.Line)
+	_, file := path.Split(c.File)
+	return fmt.Sprintf("at %s(%s:%d)", c.Function, file, c.Line)
 }
 
 type StackTrace []Caller
