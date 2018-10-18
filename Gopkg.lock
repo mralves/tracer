@@ -2,12 +2,28 @@
 
 
 [[projects]]
+  branch = "master"
+  digest = "1:6b95ea5a928720ac348743d956d1e44a00800f1ab9ce0ecd6ed1833ba44c3413"
+  name = "github.com/corpix/uarand"
+  packages = ["."]
+  pruneopts = ""
+  revision = "2b8494104d86337cdd41d0a49cbed8e4583c0ab4"
+
+[[projects]]
   digest = "1:0deddd908b6b4b768cfc272c16ee61e7088a60f7fe2f06c547bd3d8e1f8b8e77"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   pruneopts = ""
   revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
   version = "v1.1.1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:0638b0b06e210bf5058f6ecaaa3ac1c84dc0e920b07eca65c435d81a60313637"
+  name = "github.com/icrowley/fake"
+  packages = ["."]
+  pruneopts = ""
+  revision = "4178557ae428460c3780a381c824a1f3aceb6325"
 
 [[projects]]
   digest = "1:256484dbbcd271f9ecebc6795b2df8cad4c458dd0f5fd82a8c2fa0c29f233411"
@@ -40,6 +56,8 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/davecgh/go-spew/spew",
+    "github.com/icrowley/fake",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/mock",
   ]

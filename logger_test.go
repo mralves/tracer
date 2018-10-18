@@ -1,6 +1,7 @@
 package tracer
 
 import (
+	"github.com/icrowley/fake"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"testing"
@@ -29,11 +30,10 @@ func TestLogger_Alert(t *testing.T) {
 		lw1.On("Write", expected.Message, expected.TransactionId, expected.Level, expected.Args).Return().Once()
 		lw2 := mockLogWriter{}
 		lw2.On("Write", expected.Message, expected.TransactionId, expected.Level, expected.Args).Return().Once()
-
-		subject := logger{
-			createImplicitTransactions: true,
-			writers:                    []Writer{lw1, lw2},
-		}
+		subject := DefaultContext.GetLogger(fake.Brand()).(*logger)
+		subject.RegisterWriter(lw1)
+		subject.RegisterWriter(lw2)
+		subject.ImplicitTrace(true)
 		is.NotPanics(func() {
 			subject.Alert("this is a test", "some-id")
 		}, "it should not panics")
@@ -56,10 +56,9 @@ func TestLogger_Alert(t *testing.T) {
 			lw2 := mockLogWriter{}
 			lw2.On("Write", expected.Message, expected.TransactionId, expected.Level, expected.Args).Return().Once()
 
-			subject := logger{
-				createImplicitTransactions: false,
-				writers:                    []Writer{lw1, lw2},
-			}
+			subject := DefaultContext.GetLogger(fake.Brand()).(*logger)
+			subject.RegisterWriter(lw1)
+			subject.RegisterWriter(lw2)
 			is.NotPanics(func() {
 				subject.Alert("this is a test", "some-field")
 			}, "it should not panics")
@@ -80,11 +79,9 @@ func TestLogger_Alert(t *testing.T) {
 			lw2 := mockLogWriter{}
 			lw2.On("Write", expected.Message, expected.TransactionId, expected.Level, expected.Args).Return().Once()
 
-			subject := logger{
-				createImplicitTransactions: false,
-				transactionId:              "some-id",
-				writers:                    []Writer{lw1, lw2},
-			}
+			subject := DefaultContext.GetLogger(fake.Brand()).(*logger).Trace("some-id")
+			subject.RegisterWriter(lw1)
+			subject.RegisterWriter(lw2)
 			is.NotPanics(func() {
 				subject.Alert("this is a test", "some-field")
 			}, "it should not panics")

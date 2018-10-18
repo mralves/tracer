@@ -15,6 +15,7 @@ const (
 	Notice        = uint8(5)
 	Informational = uint8(6)
 	Debug         = uint8(7)
+	Unset         = uint8(255)
 )
 
 var LevelNames = []string{
@@ -28,14 +29,9 @@ var LevelNames = []string{
 	"DEBUG",
 }
 
-var defaultWriters []Writer
-var loggers = map[string]Logger{}
-var lock sync.Locker = &sync.RWMutex{}
 
 func RegisterWriter(writer Writer) {
-	lock.Lock()
-	defer lock.Unlock()
-	defaultWriters = append(defaultWriters, writer)
+	DefaultContext.RegisterWriter(writer)
 }
 
 type Logger interface {
@@ -57,29 +53,21 @@ type Logger interface {
 	F(message string, args ...interface{})
 	Trace(transactionId string) Logger
 	RegisterWriter(writer Writer)
-	AutoTrace(on bool) Logger
+	MinimumLevel(level uint8)
+	GetMinimumLevel() uint8
+	ImplicitTrace(on bool)
 }
 
 type logger struct {
 	sync.Locker
-	writers                    []Writer
-	createImplicitTransactions bool
-	transactionId              string
-	owner                      string
+	Context
+	transactionId string
+	owner         string
 }
 
-func GetLogger(owner string) Logger {
-	lock.Lock()
-	defer lock.Unlock()
-	if _, ok := loggers[owner]; !ok {
-		loggers[owner] = &logger{
-			Locker:                     &sync.RWMutex{},
-			writers:                    []Writer{},
-			owner:                      owner,
-			createImplicitTransactions: false,
-		}
-	}
-	return loggers[owner]
+func GetLogger(owner string, ctx ...Context) Logger {
+	ctx = append(ctx, DefaultContext)
+	return ctx[0].GetLogger(owner)
 }
 
 func (l *logger) Debug(message string, args ...interface{}) {
@@ -148,27 +136,19 @@ func (l *logger) F(message string, args ...interface{}) {
 
 func (l *logger) Trace(transactionId string) Logger {
 	return &logger{
-		Locker:                     &sync.RWMutex{},
-		writers:                    l.writers,
-		createImplicitTransactions: false,
-		transactionId:              transactionId,
+		Locker:        &sync.RWMutex{},
+		Context:       l.Context,
+		owner:         l.owner,
+		transactionId: transactionId,
 	}
 }
 
-func (l *logger) RegisterWriter(writer Writer) {
-	l.Lock()
-	defer l.Unlock()
-	l.writers = append(l.writers, writer)
-}
-
-func (l *logger) AutoTrace(on bool) Logger {
-	l.createImplicitTransactions = on
-	return l
-}
-
 func (l *logger) log(level uint8, message string, args []interface{}) {
+	if level > l.GetMinimumLevel() {
+		return
+	}
 	transactionId := l.transactionId
-	if l.createImplicitTransactions {
+	if transactionId == "" && l.GetImplicitTrace() {
 		if len(args) > 0 {
 			transactionId = fmt.Sprint(args[0])
 		}
@@ -183,14 +163,7 @@ func (l *logger) log(level uint8, message string, args []interface{}) {
 		StackTrace:    GetStackTrace(3),
 	}
 	var wg sync.WaitGroup
-	for _, writer := range l.writers {
-		wg.Add(1)
-		go func(writer Writer, entry Entry, wg *sync.WaitGroup) {
-			defer wg.Done()
-			writer.Write(entry)
-		}(writer, entry, &wg)
-	}
-	for _, writer := range defaultWriters {
+	for _, writer := range l.GetWriters() {
 		wg.Add(1)
 		go func(writer Writer, entry Entry, wg *sync.WaitGroup) {
 			defer wg.Done()
