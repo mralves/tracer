@@ -3,13 +3,17 @@ package tracer
 import (
 	"bytes"
 	"fmt"
-	"html/template"
+	"github.com/davecgh/go-spew/spew"
 	"io"
 	"os"
 	"regexp"
 	"strings"
+	"text/template"
 	"time"
 )
+
+
+var pointerPattern = regexp.MustCompile(`<\*>\([^)]+\)`)
 
 type Entry struct {
 	Owner         string
@@ -23,6 +27,16 @@ type Entry struct {
 
 type Writer interface {
 	Write(entry Entry)
+}
+
+func DefaultStringer(value interface{}) string {
+	if stringer, ok := value.(fmt.Stringer); ok {
+		return stringer.String()
+	}
+	rep := spew.Sprintf("%+v", value)
+	return pointerPattern.ReplaceAllStringFunc(rep, func(str string) string {
+		return ""
+	})
 }
 
 type Formatter func(entry Entry) string
@@ -46,10 +60,13 @@ func NewFileWriter(file io.Writer, formatter Formatter) *FileWriter {
 	}
 }
 
-var pattern = regexp.MustCompile(`@\w+`)
+var variablePattern = regexp.MustCompile(`@\w+`)
 
-func SimpleFormatter(format string) Formatter {
-	format = pattern.ReplaceAllStringFunc(format, func(match string) string {
+func SimpleFormatter(format string, stringer func(interface{}) string) Formatter {
+	if stringer == nil {
+		stringer = DefaultStringer
+	}
+	format = variablePattern.ReplaceAllStringFunc(format, func(match string) string {
 		return fmt.Sprintf("{{.%s}}", strings.Title(match[1:]))
 	})
 	t, err := template.New("log").Parse(format)
@@ -58,6 +75,9 @@ func SimpleFormatter(format string) Formatter {
 	}
 	return func(entry Entry) string {
 		var buf bytes.Buffer
+		for i := range entry.Args {
+			entry.Args[i] = stringer(entry.Args[i])
+		}
 		err := t.Execute(&buf, struct {
 			Entry
 			Time      string

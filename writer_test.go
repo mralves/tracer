@@ -19,18 +19,31 @@ func TestSimpleFormatter(t *testing.T) {
 		t.Parallel()
 		is := assert.New(t)
 		is.Panics(func() {
-			SimpleFormatter("{{..}}")
+			SimpleFormatter("{{..}}", nil)
 		}, "it should panics")
 	})
 	t.Run("when the entry successfully formatted", func(t *testing.T) {
 		t.Parallel()
 		is := assert.New(t)
-		subject := SimpleFormatter("**@message** **@levelName**")
+		subject := SimpleFormatter("**@message** **@levelName** @args", nil)
 		actual := subject(Entry{
 			Message: "this is a test",
 			Level: Alert,
+			Args: []interface{}{
+				struct {
+					A int
+					B interface{}
+				} {
+					A:15,
+					B: &struct {
+						X int
+					}{
+						155,
+					},
+				},
+			},
 		})
-		is.Equal("**this is a test** **ALERT**", actual, "it should return the expected string")
+		is.Equal("**this is a test** **ALERT** [{A:15}]", actual, "it should return the expected string")
 	})
 }
 
