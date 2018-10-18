@@ -43,7 +43,7 @@ func TestSimpleFormatter(t *testing.T) {
 				},
 			},
 		})
-		is.Equal("**this is a test** **ALERT** [{A:15}]", actual, "it should return the expected string")
+		is.Equal("**this is a test** **ALERT** [{A:15 B:{X:155}}]", actual, "it should return the expected string")
 	})
 }
 
