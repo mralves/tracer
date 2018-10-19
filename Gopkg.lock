@@ -52,6 +52,18 @@
   pruneopts = ""
   revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
 
+[[projects]]
+  branch = "master"
+  digest = "1:c80ffd7216bf8849975f9c0a8fbad58bdcc7c6febe5e44e888493b87811feb01"
+  name = "github.com/v2pro/plz"
+  packages = [
+    "concurrent",
+    "gls",
+    "reflect2",
+  ]
+  pruneopts = ""
+  revision = "2d49b86ea38230256fa4bf998fad76b8878c7be3"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
@@ -60,6 +72,7 @@
     "github.com/icrowley/fake",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/mock",
+    "github.com/v2pro/plz/gls",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

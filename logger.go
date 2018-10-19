@@ -29,7 +29,6 @@ var LevelNames = []string{
 	"DEBUG",
 }
 
-
 func RegisterWriter(writer Writer) {
 	DefaultContext.RegisterWriter(writer)
 }
@@ -56,7 +55,8 @@ type Logger interface {
 	A(message string, args ...interface{})
 	Fatal(message string, args ...interface{})
 	F(message string, args ...interface{})
-	Trace(transactionId string) Logger
+	Trace(transactionId ... string) Logger
+	Commit()
 	RegisterWriter(writer Writer)
 	MinimumLevel(level uint8)
 	GetMinimumLevel() uint8
@@ -134,20 +134,35 @@ func (l *logger) F(message string, args ...interface{}) {
 	l.log(Fatal, message, args)
 }
 
-func (l *logger) Trace(transactionId string) Logger {
+func (l *logger) Trace(transactionId ... string) Logger {
+	if l.transactionId == "" {
+		transactionId = append(transactionId, tracer.GetActiveTransaction())
+	} else {
+		transactionId = append(transactionId, l.transactionId)
+	}
+	tId := transactionId[0]
+	tracer.BeginTransaction(tId)
 	return &logger{
 		Locker:        &sync.RWMutex{},
 		Context:       l.Context,
 		owner:         l.owner,
-		transactionId: transactionId,
+		transactionId: tId,
 	}
 }
 
+func (l *logger) Commit() {
+	tracer.CommitTransaction(tracer.GetActiveTransaction())
+	l.transactionId = ""
+}
+
 func (l *logger) log(level uint8, message string, args []interface{}) {
+	transactionId := tracer.GetActiveTransaction()
+	if l.transactionId != "" {
+		transactionId = l.transactionId
+	}
 	if level > l.GetMinimumLevel() {
 		return
 	}
-	transactionId := l.transactionId
 	if transactionId == "" && l.GetImplicitTrace() {
 		if len(args) > 0 {
 			transactionId = fmt.Sprint(args[0])
