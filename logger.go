@@ -34,6 +34,11 @@ func RegisterWriter(writer Writer) {
 	DefaultContext.RegisterWriter(writer)
 }
 
+func GetLogger(owner string, ctx ...Context) Logger {
+	ctx = append(ctx, DefaultContext)
+	return ctx[0].GetLogger(owner)
+}
+
 type Logger interface {
 	Debug(message string, args ...interface{})
 	D(message string, args ...interface{})
@@ -63,11 +68,6 @@ type logger struct {
 	Context
 	transactionId string
 	owner         string
-}
-
-func GetLogger(owner string, ctx ...Context) Logger {
-	ctx = append(ctx, DefaultContext)
-	return ctx[0].GetLogger(owner)
 }
 
 func (l *logger) Debug(message string, args ...interface{}) {
