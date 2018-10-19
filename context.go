@@ -15,19 +15,21 @@ type context struct {
 	parent        Context
 	writers       []Writer
 	loggers       map[string]Logger
-	children      map[string]context
+	children      map[string]Context
 	minimumLevel  uint8
 	implicitTrace bool
 }
 
 type Context interface {
 	GetLogger(owner string) Logger
+	ChildContext(owner string) Context
 	RegisterWriter(writer Writer)
 	MinimumLevel(level uint8)
 	GetMinimumLevel() uint8
 	GetWriters() []Writer
 	ImplicitTrace(on bool)
 	GetImplicitTrace() bool
+	OverwriteChildren()
 }
 
 func NewContext(minimumLevel uint8, implicitTransactions bool) Context {
@@ -37,14 +39,15 @@ func NewContext(minimumLevel uint8, implicitTransactions bool) Context {
 		implicitTrace: implicitTransactions,
 		writers:       []Writer{},
 		loggers:       map[string]Logger{},
-		children:      map[string]context{},
+		children:      map[string]Context{},
 		parent:        DefaultContext,
 	}
 }
 
-func (c *context) newChild() *context {
+func (c *context) ChildContext(owner string) Context {
 	child := NewContext(c.minimumLevel, c.implicitTrace).(*context)
 	child.parent = c
+	c.children[owner] = child
 	return child
 }
 
@@ -54,7 +57,7 @@ func (c *context) GetLogger(owner string) Logger {
 	if _, ok := c.loggers[owner]; !ok {
 		c.loggers[owner] = &logger{
 			Locker:  &sync.RWMutex{},
-			Context: c.newChild(),
+			Context: c.ChildContext(owner),
 			owner:   owner,
 		}
 	}
@@ -92,4 +95,12 @@ func (c *context) MinimumLevel(level uint8) {
 
 func (c *context) GetMinimumLevel() uint8 {
 	return c.minimumLevel
+}
+
+func (c *context) OverwriteChildren() {
+	for _, child := range c.children {
+		child.MinimumLevel(c.minimumLevel)
+		child.ImplicitTrace(c.implicitTrace)
+		child.OverwriteChildren()
+	}
 }

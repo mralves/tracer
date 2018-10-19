@@ -99,13 +99,3 @@ func TestLogger_Trace(t *testing.T) {
 	is.NotEqual(subject.transactionId, (newLogger.(*logger)).transactionId, "it should not have the same transaction id as the original logger")
 	is.Equal("some-id", (newLogger.(*logger)).transactionId, "it should set the transaction id")
 }
-
-func TestGetLogger(t *testing.T) {
-	t.Parallel()
-	is := assert.New(t)
-	loggerA := GetLogger("A")
-	loggerB := GetLogger("B")
-	loggerB2 := GetLogger("B")
-	is.NotEqual(loggerA, loggerB, "it should return two different loggers")
-	is.Equal(loggerB, loggerB2, "it should return the same logger")
-}
