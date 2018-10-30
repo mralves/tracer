@@ -12,7 +12,6 @@ import (
 	"time"
 )
 
-
 var pointerPattern = regexp.MustCompile(`<\*>\([^)]+\)`)
 
 type Entry struct {
@@ -32,6 +31,8 @@ type Writer interface {
 func DefaultStringer(value interface{}) string {
 	if stringer, ok := value.(fmt.Stringer); ok {
 		return stringer.String()
+	} else if err, ok := value.(error); ok {
+		return err.Error()
 	}
 	rep := spew.Sprintf("%+v", value)
 	return pointerPattern.ReplaceAllStringFunc(rep, func(str string) string {

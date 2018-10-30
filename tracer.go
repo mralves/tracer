@@ -52,6 +52,8 @@ func (tracer *Tracer) CommitTransaction(transaction string) {
 }
 
 func (tracer *Tracer) GetActiveTransaction() string {
+	tracer.Lock()
+	defer tracer.Unlock()
 	goID := gls.GoID()
 	return tracer.TransactionParticipants[goID]
 }
