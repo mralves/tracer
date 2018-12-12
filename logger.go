@@ -2,7 +2,9 @@ package tracer
 
 import (
 	"fmt"
+	"strings"
 	"sync"
+	"text/template"
 	"time"
 )
 
@@ -55,7 +57,7 @@ type Logger interface {
 	A(message string, args ...interface{})
 	Fatal(message string, args ...interface{})
 	F(message string, args ...interface{})
-	Trace(transactionId ... string) Logger
+	Trace(transactionId ...string) Logger
 	Commit()
 	RegisterWriter(writer Writer)
 	MinimumLevel(level uint8)
@@ -134,7 +136,7 @@ func (l *logger) F(message string, args ...interface{}) {
 	l.log(Fatal, message, args)
 }
 
-func (l *logger) Trace(transactionId ... string) Logger {
+func (l *logger) Trace(transactionId ...string) Logger {
 	if l.transactionId == "" {
 		transactionId = append(transactionId, tracer.GetActiveTransaction())
 	} else {
@@ -166,6 +168,21 @@ func (l *logger) log(level uint8, message string, args []interface{}) {
 	if transactionId == "" && l.GetImplicitTrace() {
 		if len(args) > 0 {
 			transactionId = fmt.Sprint(args[0])
+		}
+	}
+	tmpl, err := template.New("log").Funcs(map[string]interface{}{
+		"arg": func(i int) interface{} {
+			if len(args) > i {
+				return args[i]
+			}
+			return nil
+		},
+	}).Parse(message)
+	if err == nil {
+		builder := &strings.Builder{}
+		err = tmpl.Execute(builder, args)
+		if err == nil {
+			message = builder.String()
 		}
 	}
 	entry := Entry{
