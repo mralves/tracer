@@ -50,7 +50,7 @@ type FileWriter struct {
 func (fw *FileWriter) Write(entry Entry) {
 	_, err := fw.writer.Write([]byte(fw.formatter(entry)))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "FAIL ON LOGGING ENTRY BECAUSE: %v\n", err.Error())
+		_, _ = fmt.Fprintf(os.Stderr, "FAIL ON LOGGING ENTRY BECAUSE: %v\n", err.Error())
 	}
 }
 

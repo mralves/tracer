@@ -194,13 +194,7 @@ func (l *logger) log(level uint8, message string, args []interface{}) {
 		TransactionId: transactionId,
 		StackTrace:    GetStackTrace(3),
 	}
-	var wg sync.WaitGroup
 	for _, writer := range l.GetWriters() {
-		wg.Add(1)
-		go func(writer Writer, entry Entry, wg *sync.WaitGroup) {
-			defer wg.Done()
-			writer.Write(entry)
-		}(writer, entry, &wg)
+		writer.Write(entry)
 	}
-	wg.Wait()
 }
