@@ -76,9 +76,11 @@ func SimpleFormatter(format string, stringer func(interface{}) string) Formatter
 	}
 	return func(entry Entry) string {
 		var buf bytes.Buffer
+		reps := make([]interface{}, len(entry.Args))
 		for i := range entry.Args {
-			entry.Args[i] = stringer(entry.Args[i])
+			reps[i] = stringer(entry.Args[i])
 		}
+		entry.Args = reps
 		err := t.Execute(&buf, struct {
 			Entry
 			Time      string
