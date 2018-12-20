@@ -3,7 +3,6 @@ package tracer
 import (
 	"bytes"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"io"
 	"os"
 	"regexp"
@@ -34,7 +33,7 @@ func DefaultStringer(value interface{}) string {
 	} else if err, ok := value.(error); ok {
 		return err.Error()
 	}
-	rep := spew.Sprintf("%+v", value)
+	rep := fmt.Sprintf("%+v", value)
 	return pointerPattern.ReplaceAllStringFunc(rep, func(str string) string {
 		return ""
 	})

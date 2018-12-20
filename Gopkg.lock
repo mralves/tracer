@@ -68,7 +68,6 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/davecgh/go-spew/spew",
     "github.com/icrowley/fake",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/mock",
