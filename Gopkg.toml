@@ -1,9 +1,0 @@
-[[constraint]]
-  branch = "master"
-  name = "github.com/stretchr/testify"
-[[constraint]]
-    name = "github.com/icrowley/fake"
-    branch = "master"
-[[constraint]]
-    name = 	"github.com/v2pro/plz"
-    branch = "master"
