@@ -1,10 +1,7 @@
 package tracer
 
 import (
-	"fmt"
-	"strings"
 	"sync"
-	"text/template"
 	"time"
 )
 
@@ -62,7 +59,6 @@ type Logger interface {
 	RegisterWriter(writer Writer)
 	MinimumLevel(level uint8)
 	GetMinimumLevel() uint8
-	ImplicitTrace(on bool)
 }
 
 type logger struct {
@@ -164,26 +160,6 @@ func (l *logger) log(level uint8, message string, args []interface{}) {
 	}
 	if level > l.GetMinimumLevel() {
 		return
-	}
-	if transactionId == "" && l.GetImplicitTrace() {
-		if len(args) > 0 {
-			transactionId = fmt.Sprint(args[0])
-		}
-	}
-	tmpl, err := template.New("log").Funcs(map[string]interface{}{
-		"arg": func(i int) interface{} {
-			if len(args) > i {
-				return args[i]
-			}
-			return nil
-		},
-	}).Parse(message)
-	if err == nil {
-		builder := &strings.Builder{}
-		err = tmpl.Execute(builder, args)
-		if err == nil {
-			message = builder.String()
-		}
 	}
 	entry := Entry{
 		Owner:         l.owner,

@@ -17,77 +17,51 @@ func (mw mockLogWriter) Write(entry Entry) {
 
 func TestLogger_Alert(t *testing.T) {
 	t.Parallel()
-	t.Run("when the logger should create implicit transactions", func(t *testing.T) {
+	t.Run("but is not on trace mode", func(t *testing.T) {
+		t.Parallel()
+		is := assert.New(t)
+		expected := Entry{
+			Message:       "this is a test",
+			TransactionId: "",
+			Level:         Alert,
+			Args:          []interface{}{"some-field"},
+		}
+		lw1 := mockLogWriter{}
+		lw1.On("Write", expected.Message, expected.TransactionId, expected.Level, expected.Args).Return().Once()
+		lw2 := mockLogWriter{}
+		lw2.On("Write", expected.Message, expected.TransactionId, expected.Level, expected.Args).Return().Once()
+
+		subject := DefaultContext.GetLogger(fake.Brand()).(*logger)
+		subject.RegisterWriter(lw1)
+		subject.RegisterWriter(lw2)
+		is.NotPanics(func() {
+			subject.Alert("this is a test", "some-field")
+		}, "it should not panics")
+		lw1.AssertExpectations(t)
+		lw2.AssertExpectations(t)
+	})
+	t.Run("and is on trace mode", func(t *testing.T) {
 		t.Parallel()
 		is := assert.New(t)
 		expected := Entry{
 			Message:       "this is a test",
 			TransactionId: "some-id",
 			Level:         Alert,
-			Args:          []interface{}{"some-id"},
+			Args:          []interface{}{"some-field"},
 		}
 		lw1 := mockLogWriter{}
 		lw1.On("Write", expected.Message, expected.TransactionId, expected.Level, expected.Args).Return().Once()
 		lw2 := mockLogWriter{}
 		lw2.On("Write", expected.Message, expected.TransactionId, expected.Level, expected.Args).Return().Once()
-		subject := DefaultContext.GetLogger(fake.Brand()).(*logger)
+
+		subject := DefaultContext.GetLogger(fake.Brand()).(*logger).Trace("some-id")
 		subject.RegisterWriter(lw1)
 		subject.RegisterWriter(lw2)
-		subject.ImplicitTrace(true)
 		is.NotPanics(func() {
-			subject.Alert("this is a test", "some-id")
+			subject.Alert("this is a test", "some-field")
 		}, "it should not panics")
 		lw1.AssertExpectations(t)
 		lw2.AssertExpectations(t)
-	})
-	t.Run("when the logger should not create implicit transactions", func(t *testing.T) {
-		t.Parallel()
-		t.Run("but is not on trace mode", func(t *testing.T) {
-			t.Parallel()
-			is := assert.New(t)
-			expected := Entry{
-				Message:       "this is a test",
-				TransactionId: "",
-				Level:         Alert,
-				Args:          []interface{}{"some-field"},
-			}
-			lw1 := mockLogWriter{}
-			lw1.On("Write", expected.Message, expected.TransactionId, expected.Level, expected.Args).Return().Once()
-			lw2 := mockLogWriter{}
-			lw2.On("Write", expected.Message, expected.TransactionId, expected.Level, expected.Args).Return().Once()
-
-			subject := DefaultContext.GetLogger(fake.Brand()).(*logger)
-			subject.RegisterWriter(lw1)
-			subject.RegisterWriter(lw2)
-			is.NotPanics(func() {
-				subject.Alert("this is a test", "some-field")
-			}, "it should not panics")
-			lw1.AssertExpectations(t)
-			lw2.AssertExpectations(t)
-		})
-		t.Run("and is on trace mode", func(t *testing.T) {
-			t.Parallel()
-			is := assert.New(t)
-			expected := Entry{
-				Message:       "this is a test",
-				TransactionId: "some-id",
-				Level:         Alert,
-				Args:          []interface{}{"some-field"},
-			}
-			lw1 := mockLogWriter{}
-			lw1.On("Write", expected.Message, expected.TransactionId, expected.Level, expected.Args).Return().Once()
-			lw2 := mockLogWriter{}
-			lw2.On("Write", expected.Message, expected.TransactionId, expected.Level, expected.Args).Return().Once()
-
-			subject := DefaultContext.GetLogger(fake.Brand()).(*logger).Trace("some-id")
-			subject.RegisterWriter(lw1)
-			subject.RegisterWriter(lw2)
-			is.NotPanics(func() {
-				subject.Alert("this is a test", "some-field")
-			}, "it should not panics")
-			lw1.AssertExpectations(t)
-			lw2.AssertExpectations(t)
-		})
 	})
 }
 
