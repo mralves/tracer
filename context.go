@@ -7,17 +7,16 @@ import (
 var DefaultContext Context = nil
 
 func init() {
-	DefaultContext = NewContext(Debug, false)
+	DefaultContext = NewContext(Debug)
 }
 
 type context struct {
 	sync.Locker
-	parent        Context
-	writers       []Writer
-	loggers       map[string]Logger
-	children      map[string]Context
-	minimumLevel  uint8
-	implicitTrace bool
+	parent       Context
+	writers      []Writer
+	loggers      map[string]Logger
+	children     map[string]Context
+	minimumLevel uint8
 }
 
 type Context interface {
@@ -27,25 +26,22 @@ type Context interface {
 	MinimumLevel(level uint8)
 	GetMinimumLevel() uint8
 	GetWriters() []Writer
-	ImplicitTrace(on bool)
-	GetImplicitTrace() bool
 	OverwriteChildren()
 }
 
-func NewContext(minimumLevel uint8, implicitTransactions bool) Context {
+func NewContext(minimumLevel uint8) Context {
 	return &context{
-		Locker:        &sync.RWMutex{},
-		minimumLevel:  minimumLevel,
-		implicitTrace: implicitTransactions,
-		writers:       []Writer{},
-		loggers:       map[string]Logger{},
-		children:      map[string]Context{},
-		parent:        DefaultContext,
+		Locker:       &sync.RWMutex{},
+		minimumLevel: minimumLevel,
+		writers:      []Writer{},
+		loggers:      map[string]Logger{},
+		children:     map[string]Context{},
+		parent:       DefaultContext,
 	}
 }
 
 func (c *context) ChildContext(owner string) Context {
-	child := NewContext(c.minimumLevel, c.implicitTrace).(*context)
+	child := NewContext(c.minimumLevel).(*context)
 	child.parent = c
 	c.children[owner] = child
 	return child
@@ -81,14 +77,6 @@ func (c *context) GetWriters() []Writer {
 	return writers
 }
 
-func (c *context) ImplicitTrace(state bool) {
-	c.implicitTrace = state
-}
-
-func (c *context) GetImplicitTrace() bool {
-	return c.implicitTrace
-}
-
 func (c *context) MinimumLevel(level uint8) {
 	c.minimumLevel = level
 }
@@ -100,7 +88,6 @@ func (c *context) GetMinimumLevel() uint8 {
 func (c *context) OverwriteChildren() {
 	for _, child := range c.children {
 		child.MinimumLevel(c.minimumLevel)
-		child.ImplicitTrace(c.implicitTrace)
 		child.OverwriteChildren()
 	}
 }

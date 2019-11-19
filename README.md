@@ -43,7 +43,6 @@ func inner() {
 func main() {
 	logger := tracer.GetLogger("moduleA")
 	tracer.RegisterWriter(tracer.NewFileWriter(os.Stdout, tracer.SimpleFormatter("message='@message' transaction=@transactionId\n", nil)))
-	logger.ImplicitTrace(true) // tells the logger to automatic creates transactions using the first optional argument on a log
 	logger.Info("logging in transaction 'A'", "A")
 	logger.Info("logging in transaction 'B'", "B")
 	logger.Info("logging in transaction 'B'", "B")
